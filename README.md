@@ -14,3 +14,5 @@ Evaluating place recognition algorithms using GTA V
 	- image files are located in "<GTA V root directory>/dataset/"
 	- numpad 0 shows the current camera 6DOF pose(x,y,z location coordinates and camera pose)
 	- numpad 0 also writes the camera 6DOF pose to a file "<GTA V root directory>/coords.txt"
+- Once data capture complete copy "resizing-script.py" to "<GTA V root directory>/dataset/" and run
+- Image files will be resized to 640x360 pixels and saved to "<GTA V root directory>/dataset/resized" folder
