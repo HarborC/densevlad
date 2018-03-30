@@ -161,7 +161,7 @@ void displayText(std::string caption) {
 void teleportToLocationNoGroundCheck(float x ,float y ,float z) {
 	Entity e = PLAYER::PLAYER_PED_ID();
 	ENTITY::SET_ENTITY_COORDS_NO_OFFSET(e, x, y, z , 0, 0, 1);
-	WAIT(10);
+	WAIT(100);
 	/*
 	DWORD time = 2500;
 	statusTextDrawTicksMax = GetTickCount() + time;
@@ -216,8 +216,8 @@ void setCameraCoordinates() {
 		gC = CAM::GET_GAMEPLAY_CAM_COORD();
 		gR = CAM::GET_GAMEPLAY_CAM_ROT(0);
 		gFOV = CAM::GET_GAMEPLAY_CAM_FOV();
-		CAM::SET_CAM_COORD(c, gC.x+xOff, gC.y+yOff, gC.z + 50+zOff);
-		CAM::SET_CAM_ROT(c, gR.x, gR.y, gR.z, 0);
+		CAM::SET_CAM_COORD(c, gC.x, gC.y, gC.z);
+		CAM::SET_CAM_ROT(c, gR.x+xOff, gR.y+yOff, gR.z+zOff, 0);
 		CAM::SET_CAM_FOV(c, gFOV);
 		CAM::RENDER_SCRIPT_CAMS(1, 0, 3000, 1, 0);
 	}
@@ -300,21 +300,23 @@ void captureDataset() {
 
 	};
 	std::stringstream s;
-	int xOff = -20;
+	int xOff = -30;
 	int yOff = -20;
 	int zOff = -20;
-	for (int i = 0;i < 5;i++) {
+	for (int i = 0;i < 3;i++) {
 		teleportToLocationNoGroundCheck(camInit[i].cx, camInit[i].cy, camInit[i].cz);
 		// wait for textures to load
 		WAIT(1000);
 		gC = CAM::GET_GAMEPLAY_CAM_COORD();
 		gFOV = CAM::GET_GAMEPLAY_CAM_FOV();
-		CAM::SET_CAM_COORD(c, gC.x, gC.y, gC.z);
+		// add 5 to y position to make sure when camera rotated parts of player aren't visible
+		CAM::SET_CAM_COORD(c, gC.x, gC.y, gC.z+1);
+		// up-down rotation is x
 		CAM::SET_CAM_ROT(c, camInit[i].rx + xOff, camInit[i].ry + yOff, camInit[i].rz + zOff, 0);
 		CAM::SET_CAM_FOV(c, camInit[i].fov);
 		CAM::RENDER_SCRIPT_CAMS(1, 0, 3000, 1, 0);
 		WAIT(1000);
-		xOff = -20;
+		xOff = -30;
 		for (int j = 0;j < 5;j++) {
 			yOff = -20;
 			for (int k = 0;k < 5;k++) {
@@ -330,7 +332,7 @@ void captureDataset() {
 				}
 				yOff += 10;
 			}
-			xOff += 10;
+			xOff += 5;
 		}
 		
 	}

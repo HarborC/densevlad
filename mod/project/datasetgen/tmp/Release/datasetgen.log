@@ -3,8 +3,8 @@ C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCT
   script.cpp
 script.cpp(187): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
   Generating code
-  0 of 620 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+  1 of 620 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+    1 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   datasetgen.vcxproj -> D:\games\Grand Theft Auto V\datasetgen.asi
