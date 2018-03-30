@@ -1,11 +1,14 @@
 # gta-place-recognition
 Evaluating place recognition algorithms using GTA V
 
+# dependencies
+- PIL, os and sys libraries for Python
+
 # instructions
 - Open solution file "datasetgen.sln" in Visual Studio
 - Retarget if needed
 - Build project(F7)
-- copy file "datasetgen.asi" from "bin" folder to <GTA V root directory>
+- Copy file "datasetgen.asi" from "bin" folder to <GTA V root directory>
 - Start game. Cycle to First Person Mode using v key
 - Disable map and HUD using game settings menu for best results
 - When in-game run mod using F4
