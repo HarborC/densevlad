@@ -1,0 +1,141 @@
+Questions for TJ:
+- What method is used to select a K for K-Means for image descriptor clustering
+- Is nearest neighbour search for feature based just the euclidean distance between the feature vectors?
+
+Useful mods to look at to create dataset capturing tool
+- https://www.gta5-mods.com/scripts/scripted-camera-tool-1-0
+- https://www.gta5-mods.com/scripts/teleport-menu
+
+
+Useful tutorials
+- https://www.youtube.com/watch?v=xkbm_NkNbAI 
+- https://www.youtube.com/watch?v=PaQZEdES7No
+- https://www.youtube.com/watch?v=qpqep8w64ig
+
+- bitbucket
+
+- Zurich Building Dataset
+- Look at the code of the place recognition method when generating dataset to make sure it matches the format. 
+- Can use ORB SLAM look closure for place recognition. And the vocabulary files.
+- SIFT works regardless of orientation changes. 
+
+ORB SLAM 2 Place Recognition:
+- located in KeyFrameDatabase.
+
+- After object initialization, it is used mainly in LoopClosing::DetectLoop and Tracking::Relocalization.
+
+- When loop closing ORB SLAM has to recognize a place it has been before. 
+
+Before you TAB down from the game to make changes in your code in visual studio, hold CTRL and press R. A small beep will sound which means that all mods are inactivated. You can now create a new version of your mod and replace the old one with it. When you're done press CTRL+R again to reload all your mods. You should hear three beeps. Note that for this to work you need an empty file named "ScripthookV.dev" in your game folder. 
+
+When you start scripting you need some sources and information about how to do different things. The above all most important source is Alexander Blades http://www.dev-c.com with the native database /nativedb/. Not everything is known about how functions work or which parameters are used. Sometimes you need to guess or try and error.
+
+void notifyAboveMap(char* msg) {
+	UI::_SET_NOTIFICATION_TEXT_ENTRY("STRING");
+	UI::_ADD_TEXT_COMPONENT_STRING(msg);
+	UI::_DRAW_NOTIFICATION(FALSE, FALSE);
+}
+
+There is a lot more control over scripted cameras. They can be created with CREATE_CAM or more often CREATE_CAM_WITH_PARAMS, which return an ID, it's possible to get/set most of their properties, interpolate between them, attach/pointAt targets, etc. Each creation function takes a string name, ie "DEFAULT_SCRIPTED_CAMERA", "DEFAULT_SPLINE_CAMERA", and a few others. I've only tested using "DEFAULT_SCRIPTED_CAMERA" so far, as it's the most commonly used one. p8 has to be true for the camera to work. 
+ 
+Creating a camera sets it as active, but that's not enough for it to render. RENDER_SCRIPT_CAMS must also be called. I'm not sure what all the params are, only that the first is a bool that sets whether to render scripted cameras or the gameplay camera. Using the common values from the scripts for the others seems to work: RENDER_SCRIPT_CAMS(1, 0, 3000, 1, 0).  Set the first param to 0 to switch back to the default game camera
+
+To shake the camera, call SHAKE_CAM(cameraId, shakeType, shakeAmplitude).  shakeType is a string containing the name of the shake type.  I found the following types in the decompiled scripts:
+ 
+"HAND_SHAKE"
+"SMALL_EXPLOSION_SHAKE"
+"MEDIUM_EXPLOSION_SHAKE"
+"LARGE_EXPLOSION_SHAKE"
+"JOLT_SHAKE"
+"VIBRATE_SHAKE"
+"ROAD_VIBRATION_SHAKE"
+"DRUNK_SHAKE"
+"SKY_DIVING_SHAKE"
+"FAMILY5_DRUG_TRIP_SHAKE"
+"DEATH_FAIL_IN_EFFECT_SHAKE" Some types are one-shot shakes (such as explosions), but most of them loop. To stop a looping shake, use STOP_CAM_SHAKING
+
+There seems to be a hard limit of 26 scripted cameras that can be created at a time. After that, calling CREATE_CAM will return an invalid ID, until other cameras are destroyed with DESTROY_CAM(cameraID), or DESTROY_ALL_CAMS()
+
+- Level of detail is lost when player isnt close to the camera. So why not teleport the player so that its always under the camera 
+
+- Make a function that prints out the camera coordinates and rotation to a file. (done!)
+- Then use something like this
+
+static struct {
+		LPCSTR  text;
+		float x;
+		float y;
+		float z;
+	} lines[lineCount] = {
+			{ "MARKER" },
+			{ "MICHAEL'S HOUSE", -852.4f, 160.0f, 65.6f },
+			{ "FRANKLIN'S HOUSE", 7.9f, 548.1f, 175.5f },
+			{ "TREVOR'S TRAILER", 1985.7f, 3812.2f, 32.2f },
+			{ "AIRPORT ENTRANCE", -1034.6f, -2733.6f, 13.8f },
+			{ "AIRPORT FIELD", -1336.0f, -3044.0f, 13.9f },
+			{ "ELYSIAN ISLAND", 338.2f, -2715.9f, 38.5f },
+			{ "JETSAM", 760.4f, -2943.2f, 5.8f },
+			{ "STRIPCLUB", 127.4f, -1307.7f, 29.2f },
+			{ "ELBURRO HEIGHTS", 1384.0f, -2057.1f, 52.0f },
+			{ "FERRIS WHEEL", -1670.7f, -1125.0f, 13.0f },
+			{ "CHUMASH", -3192.6f, 1100.0f, 20.2f },
+			{ "WINDFARM", 2354.0f, 1830.3f, 101.1f },
+			{ "MILITARY BASE", -2047.4f, 3132.1f, 32.8f },
+			{ "MCKENZIE AIRFIELD", 2121.7f, 4796.3f, 41.1f },
+			{ "DESERT AIRFIELD", 1747.0f, 3273.7f, 41.1f },
+			{ "CHILLIAD", 425.4f, 5614.3f, 766.5f }
+	};
+
+static struct {
+	float cx;
+	float cy;
+	float cz;
+	float rx;
+	float ry;
+	float rz;
+	} caminit[10] = {
+		{50.4939, -1497.96, 29.2918, 10.9893, 0.0577853, -5.20431,50},
+		{122.106, -1446, 29.3212, 7.07328, 0.147676, -149.194,50},
+		{23.6355, -1139.56, 29.2659, 10.9277, 0.118116, 11.8403,50},
+		{-88.1479, -255.713, 44.8065, 13.4322, 0.0517441, 95.2865,50},
+		{42.4079, -151.113, 55.3849, 11.5501, 0.0517797, -28.5407,50},
+		{140.505, -192.38, 54.5084, 12.5269, 0.346575, 151.551,50},
+		{251.076, -354.972, 44.5451, 22.1798, 0.050242, 163.503,50},
+		{431.8, -153.019, 63.7157, 22.3034, 0.143301, -39.942,50},
+		{281.778, -78.816, 70.1712, 14.6755, 0.269785, 34.7926,50},
+		{-254.151, -657.513, 33.2058, 11.3522, 0.267428, 48.3141,50},
+		{-1713.58, -1080.29, 13.0174, 16.8185, 0.178879, -133.481,50},
+		{-1289.12, -501.332, 33.1679, 17.116, 0.0518984, -88.1658,50},
+		{-1321.43, -524.423, 32.7932, 20.2434, 0.220766, 52.1893,50},
+		{-1453.83, -622.527, 30.7684, 22.1241, 0.162537, 48.4944,50}
+	};
+ 
+ - Can obtain coordinate data out of gta v now. Data is stored in the gta v game directory
+ - Screen capture now working. Can obtain 8mb bitmaps from the game. 
+ - Can probably create a python script to compress images to .png or something to make them more useful if needed.
+ - But if we are going to process them in c++ then best to use the bitmap format because we can read it in with gdiplus
+ - Now to obtain the initial camera location for 10 landmark spots.
+
+Place recognition as a regression problem with continuous ground truth data (x, y, z coordinates instead of labels)
+ - http://ieeexplore.ieee.org/document/7468579/
+ - Supervised and Unsupervised Linear Learning Techniques for Visual Place Recognition in Changing Environments
+ - Ground truth for Tokyo(Torii15) dataset is GPS coordinates
+ - Ground truth for Oxford dataset is Labels
+ - Need to export player coordinates and gameplay camera rotation for each initial starting position for each label.
+ 	because we can get the gameplay camera coordinates after teleporting the player to the destination and waiting a couple seconds
+ - Consider 10 labels. And for each label just mark it as 1,2,3...n where n is label number
+ - Start with just going to each label and taking 1 picture
+ - Need to save field of view as well. 
+
+ - Current method of capturing is incorrect as it doesn't keep time and weather constant
+ - Weather and time persists now. Also fixed the FOV not being saved. Now we can actually get the coordinates of the labels.
+ - Simple dataset generation of the 14 places is now complete. 1 image saved for each label. 
+ - Complex dataset generation working several images saved for each label
+ - Need to remove minimap and HUD
+ - If possible get rid of vehicles.
+
+ - Trying to setup existing methods:
+ 	- Starting with cnnbasedimageretrieval
+ 	- Setting up required toolbox using readme instructions
+ 	- Needed minGW add on for matlab
+- Remove HUD notification on screen like in the current dataset first image
