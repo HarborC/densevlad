@@ -246,7 +246,7 @@ void showPlayerCoordinates() {
 		f.open("coords.txt", std::ios::app | std::ios::out);
 		f << s.str() << std::endl;
 		f.close();
-		screenCapture("output.bmp");
+		//screenCapture("output.bmp");
 		textToShow = s.str();
 	}
 }
