@@ -1,0 +1,9 @@
+/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/CMakeFiles/rebuild_cache.dir
+/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/CMakeFiles/edit_cache.dir
+/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/CMakeFiles/list_install_components.dir
+/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/CMakeFiles/DBoW2.dir
+/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/CMakeFiles/demo.dir
+/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/CMakeFiles/install.dir
+/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/CMakeFiles/Dependencies.dir
+/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/CMakeFiles/install/strip.dir
+/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/CMakeFiles/install/local.dir

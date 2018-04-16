@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/CMakeFiles/DLib"
+		},
+		{
+			"file" : "/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/CMakeFiles/DLib.rule"
+		},
+		{
+			"file" : "/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/CMakeFiles/DLib-complete.rule"
+		},
+		{
+			"file" : "/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/dependencies/src/DLib-stamp/DLib-install.rule"
+		},
+		{
+			"file" : "/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/dependencies/src/DLib-stamp/DLib-mkdir.rule"
+		},
+		{
+			"file" : "/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/dependencies/src/DLib-stamp/DLib-download.rule"
+		},
+		{
+			"file" : "/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/dependencies/src/DLib-stamp/DLib-update.rule"
+		},
+		{
+			"file" : "/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/dependencies/src/DLib-stamp/DLib-patch.rule"
+		},
+		{
+			"file" : "/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/dependencies/src/DLib-stamp/DLib-configure.rule"
+		},
+		{
+			"file" : "/home/abdulmohsij/Desktop/advanced-topics/DBoW2-master/build/dependencies/src/DLib-stamp/DLib-build.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"DLib"
+		],
+		"name" : "DLib"
+	}
+}
