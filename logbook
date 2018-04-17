@@ -139,3 +139,6 @@ Place recognition as a regression problem with continuous ground truth data (x, 
  	- Setting up required toolbox using readme instructions
  	- Needed minGW add on for matlab
 - Remove HUD notification on screen like in the current dataset first image
+
+DBoW2
+- Converted binary vocabulary file from ORBSLAM2 to yml format for new DBoW2. 

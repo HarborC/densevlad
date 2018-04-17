@@ -30,11 +30,12 @@ using namespace DBoW2;
 using namespace DUtils;
 using namespace std;
 
-typedef std::vector<std::string> stringvec;
+typedef vector<string> stringvec;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 void loadFeatures(vector<vector<cv::Mat > > &features);
+void loadFeaturesFromDrive(string name, vector<vector<cv::Mat > > &features, vector<string> labels);
 void changeStructure(const cv::Mat &plain, vector<cv::Mat> &out);
 void testVocCreation(const vector<vector<cv::Mat > > &features);
 void testDatabase(const vector<vector<cv::Mat > > &features);
@@ -70,9 +71,11 @@ void read_directory(const std::string& name, stringvec& v)
 int main()
 {
   vector<vector<cv::Mat > > features;
-  loadFeatures(features);
+  vector<string> labels;
+  loadFeaturesFromDrive("images",features,labels);
+  //loadFeatures(features);
 
-  testVocCreation(features);
+  //testVocCreation(features);
 
   wait();
 
@@ -110,10 +113,12 @@ void loadFeatures(vector<vector<cv::Mat > > &features)
 
 // ----------------------------------------------------------------------------
 
-void loadFeaturesFromDrive(std::string& name, vector<vector<cv::Mat > > &features)
+void loadFeaturesFromDrive(string name, vector<vector<cv::Mat > > &features, vector<string> labels)
 {
   features.clear();
   features.reserve(NIMAGES);
+  labels.clear();
+  labels.reserve(NIMAGES);
 
   // ORB-SLAM extracts 1000 features for mono kitti example that we used for GTA V
   cv::Ptr<cv::ORB> orb = cv::ORB::create(1000);
@@ -124,9 +129,10 @@ void loadFeaturesFromDrive(std::string& name, vector<vector<cv::Mat > > &feature
   DIR* dirp = opendir(name.c_str());
   struct dirent * dp;
   while ((dp = readdir(dirp)) != NULL) {
-      if(dp->d_name!="." && dp->d_name!=".."){
+      if(strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0){
         stringstream ss;
-        ss<<"images/train/"<<dp->d_name;
+        ss<<name<<"/"<<dp->d_name;
+        cout<<"file is:"<<ss.str()<<endl;
         cv::Mat image = cv::imread(ss.str(), 0);
         cv::Mat mask;
         vector<cv::KeyPoint> keypoints;
@@ -259,10 +265,13 @@ void testDatabase(const vector<vector<cv::Mat > > &features)
   // load the vocabulary from disk
   //OrbVocabulary voc("small_voc.yml.gz");
 
-  OrbVocabulary  voc;
+  OrbVocabulary  voc("ORBvoc.yml.gz");
 
   // using the ORB SLAM vocabulary which works well with cityscapes
-  voc.loadFromTextFile("ORBvoc.txt");
+  //loads binary ORBSLAM vocabulary
+  //voc.loadFromTextFile("ORBvoc.txt");
+  //voc.save("ORBvoc.yml.gz");
+
 
   OrbDatabase db(voc, false, 0); // false = do not use direct index
   // (so ignore the last param)
