@@ -303,7 +303,7 @@ void captureDataset() {
 	int xOff = -30;
 	int yOff = -20;
 	int zOff = -20;
-	for (int i = 0;i < 3;i++) {
+	for (int i = 0;i < 14;i++) {
 		teleportToLocationNoGroundCheck(camInit[i].cx, camInit[i].cy, camInit[i].cz);
 		// wait for textures to load
 		WAIT(1000);
@@ -327,7 +327,12 @@ void captureDataset() {
 					zOff += 10;
 					WAIT(100);
 					s.str("");
-					s << "dataset/output" << i << j << k << l << ".bmp";
+					if (l < 4) {
+						s << "dataset/train" << i << "_" << j << k << l << ".bmp";
+					}
+					else {
+						s << "dataset/test" << i << "_" << j << k << l << ".bmp";
+					}
 					screenCapture((char*)(s.str().c_str()));
 				}
 				yOff += 10;
