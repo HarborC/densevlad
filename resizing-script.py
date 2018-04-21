@@ -1,4 +1,6 @@
 import os, sys
+import cv2
+import numpy as np
 from PIL import Image
 
 size = 640, 480
@@ -16,7 +18,10 @@ for infile in os.listdir(os.getcwd()):
         try:
             im = Image.open(os.getcwd()+"\\"+infile)
             im.thumbnail(size, Image.ANTIALIAS)
-            im.save(outfile, "png")
+            img = np.array(im)
+            
+            img = img.astype(np.uint8)
+            cv2.imwrite(outfile,cv2.cvtColor(np.array(img),cv2.COLOR_BGR2GRAY))
             print(infile+" resized")
         except IOError:
             print ("cannot create thumbnail for {}".format(infile))
