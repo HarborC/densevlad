@@ -328,10 +328,10 @@ void captureDataset() {
 					WAIT(100);
 					s.str("");
 					if (l < 4) {
-						s << "dataset/train" << i << "_" << j << k << l << ".bmp";
+						s << "dataset/train/" << i << "_" << j << k << l << ".bmp";
 					}
 					else {
-						s << "dataset/test" << i << "_" << j << k << l << ".bmp";
+						s << "dataset/test/" << i << "_" << j << k << l << ".bmp";
 					}
 					screenCapture((char*)(s.str().c_str()));
 				}
