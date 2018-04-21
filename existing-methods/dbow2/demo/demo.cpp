@@ -35,7 +35,11 @@ typedef vector<string> stringvec;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 void loadFeatures(vector<vector<cv::Mat > > &features);
-void loadFeaturesFromDrive(string name, vector<vector<cv::Mat > > &features, vector<string> labels);
+
+void loadTrainingFeatures(string name, vector<vector<cv::Mat > > &trainFeatures, vector<string> &trainLabels);
+void loadTestingFeatures(string name, vector<vector<cv::Mat > > &testFeatures, vector<string> &testLabels);
+void testDatabaseFromDrive(const vector<vector<cv::Mat > > &trainFeatures, const vector<vector<cv::Mat > > &testFeatures, vector<string> &trainLabels, vector<string> &testLabels);
+
 void changeStructure(const cv::Mat &plain, vector<cv::Mat> &out);
 void testVocCreation(const vector<vector<cv::Mat > > &features);
 void testDatabase(const vector<vector<cv::Mat > > &features);
@@ -44,10 +48,10 @@ void testDatabase(const vector<vector<cv::Mat > > &features);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 // number of training images
-const int NTRAIN = 4;
+const int NTRAIN = 1400;
 
 // number of testing images
-const int NTEST = 4;
+const int NTEST = 350;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
@@ -58,33 +62,37 @@ void wait()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
- 
+
 void read_directory(const std::string& name, stringvec& v)
 {
-    DIR* dirp = opendir(name.c_str());
-    struct dirent * dp;
-    while ((dp = readdir(dirp)) != NULL) {
-        v.push_back(dp->d_name);
-    }
-    closedir(dirp);
+  DIR* dirp = opendir(name.c_str());
+  struct dirent * dp;
+  while ((dp = readdir(dirp)) != NULL) 
+  {
+    v.push_back(dp->d_name);
+  }
+  closedir(dirp);
 }
 
 // ----------------------------------------------------------------------------
 
 int main()
 {
-  vector<vector<cv::Mat > > features; //training images
+  vector<vector<cv::Mat > > featurestrain; //training images
   vector<vector<cv::Mat > > featurestest; //testing images
-  vector<string> labels;
-  vector<string> labelstesting; // testing image labels
-  loadFeaturesFromDrive("images",features,labels);
+  vector<string> labelstrain; // training image labels
+  vector<string> labelstest; // testing image labels
+  loadTrainingFeatures("images/train",featurestrain,labelstrain);
+  loadTestingFeatures("images/test", featurestest, labelstest);
+  testDatabaseFromDrive(featurestrain, featurestest, labelstrain, labelstest);
+
   //loadFeatures(features);
 
   //testVocCreation(features);
 
   wait();
 
-  testDatabase(features);
+  //testDatabase(features);
 
   return 0;
 }
@@ -116,22 +124,69 @@ void loadFeatures(vector<vector<cv::Mat > > &features)
   }
 }
 
-string getLabel(string filename){
+
+/* files are named as <LABEL>_<NUMBER> */
+string getLabel(string filename)
+{
   string label = "";
-  for(int i=0;i<filename.length();i++){
-    if(filename[i]!='_'){
+  for(int i=0;i<int(filename.length());i++)
+  {
+    if(filename[i]!='_')
+    {
       label += filename[i];
     }
-    else{
+    else
+    {
       break;
     }
   }
   return label;
 }
 
+
 // ----------------------------------------------------------------------------
 
-void loadTestingFeatures(string name, vector<vector<cv::Mat > > &testFeatures, vector<string> &testLabels){
+void loadTrainingFeatures(string name, vector<vector<cv::Mat > > &trainFeatures, vector<string> &trainLabels)
+{
+  trainFeatures.clear();
+  trainFeatures.reserve(NTRAIN);
+  trainLabels.clear();
+  trainLabels.reserve(NTRAIN);
+
+  // ORB-SLAM extracts 1000 features for mono kitti example that we used for GTA V
+  cv::Ptr<cv::ORB> orb = cv::ORB::create(1000);
+
+  cout << "Extracting ORB features..." << endl;
+
+  // get all images in training directory and get their features
+  DIR* dirp = opendir(name.c_str());
+  struct dirent * dp;
+  while((dp = readdir(dirp)) != NULL) 
+  {
+    if(strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0)
+    {
+      stringstream ss;
+      ss<<name<<"/"<<dp->d_name;
+      cout<<"file is:"<<ss.str()<<endl;
+      cv::Mat image = cv::imread(ss.str(), 0);
+      cv::Mat mask;
+      vector<cv::KeyPoint> keypoints;
+      cv::Mat descriptors;
+
+      orb->detectAndCompute(image, mask, keypoints, descriptors);
+
+      trainLabels.push_back(getLabel(dp->d_name));
+      trainFeatures.push_back(vector<cv::Mat >());
+      changeStructure(descriptors, trainFeatures.back());
+    }
+  }
+  closedir(dirp);
+}
+
+// ----------------------------------------------------------------------------
+
+void loadTestingFeatures(string name, vector<vector<cv::Mat > > &testFeatures, vector<string> &testLabels)
+{
   testFeatures.clear();
   testFeatures.reserve(NTEST);
   testLabels.clear();
@@ -142,64 +197,30 @@ void loadTestingFeatures(string name, vector<vector<cv::Mat > > &testFeatures, v
 
   cout << "Extracting testing ORB features..." << endl;
 
-  // get all images in training directory and get their features
+  // get all images in testing directory and get their features
   DIR* dirp = opendir(name.c_str());
   struct dirent * dp;
-  while ((dp = readdir(dirp)) != NULL) {
-      if(strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0){
-        stringstream ss;
-        ss<<name<<"/"<<dp->d_name;
-        cout<<"file is:"<<ss.str()<<endl;
-        cv::Mat image = cv::imread(ss.str(), 0);
-        cv::Mat mask;
-        vector<cv::KeyPoint> keypoints;
-        cv::Mat descriptors;
+  while((dp = readdir(dirp)) != NULL) 
+  {
+    if(strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0)
+    {
+      stringstream ss;
+      ss<<name<<"/"<<dp->d_name;
+      cout<<"file is:"<<ss.str()<<endl;
+      cv::Mat image = cv::imread(ss.str(), 0);
+      cv::Mat mask;
+      vector<cv::KeyPoint> keypoints;
+      cv::Mat descriptors;
 
-        orb->detectAndCompute(image, mask, keypoints, descriptors);
+      orb->detectAndCompute(image, mask, keypoints, descriptors);
 
-        testLabels.push_back(getLabel(dp->d_name));
-        testFeatures.push_back(vector<cv::Mat >());
-        changeStructure(descriptors, testFeatures.back());
-      }
+      testLabels.push_back(getLabel(dp->d_name));
+      testFeatures.push_back(vector<cv::Mat >());
+      changeStructure(descriptors, testFeatures.back());
+    }
   }
   closedir(dirp);
 
-}
-
-// ----------------------------------------------------------------------------
-
-void loadFeaturesFromDrive(string name, vector<vector<cv::Mat > > &features, vector<string> labels)
-{
-  features.clear();
-  features.reserve(NTRAIN);
-  labels.clear();
-  labels.reserve(NTRAIN);
-
-  // ORB-SLAM extracts 1000 features for mono kitti example that we used for GTA V
-  cv::Ptr<cv::ORB> orb = cv::ORB::create(1000);
-
-  cout << "Extracting ORB features..." << endl;
-
-  // get all images in training directory and get their features
-  DIR* dirp = opendir(name.c_str());
-  struct dirent * dp;
-  while ((dp = readdir(dirp)) != NULL) {
-      if(strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0){
-        stringstream ss;
-        ss<<name<<"/"<<dp->d_name;
-        cout<<"file is:"<<ss.str()<<endl;
-        cv::Mat image = cv::imread(ss.str(), 0);
-        cv::Mat mask;
-        vector<cv::KeyPoint> keypoints;
-        cv::Mat descriptors;
-
-        orb->detectAndCompute(image, mask, keypoints, descriptors);
-
-        features.push_back(vector<cv::Mat >());
-        changeStructure(descriptors, features.back());
-      }
-  }
-  closedir(dirp);
 }
 
 // ----------------------------------------------------------------------------
@@ -207,7 +228,8 @@ void loadFeaturesFromDrive(string name, vector<vector<cv::Mat > > &features, vec
 void testDatabaseFromDrive(const vector<vector<cv::Mat > > &trainFeatures, const vector<vector<cv::Mat > > &testFeatures, vector<string> &trainLabels, vector<string> &testLabels)
 {
   int correctLabels = 0;
-  cout << "Creating a small database..." << endl;
+
+  cout << "Creating trained database..." << endl;
 
   // load the vocabulary from disk
 
@@ -224,7 +246,7 @@ void testDatabaseFromDrive(const vector<vector<cv::Mat > > &trainFeatures, const
   // add images to the database
   for(int i = 0; i < NTRAIN; i++)
   {
-    db.add(features[i]);
+    db.add(trainFeatures[i]);
   }
 
   cout << "... done!" << endl;
@@ -237,16 +259,20 @@ void testDatabaseFromDrive(const vector<vector<cv::Mat > > &trainFeatures, const
   QueryResults ret;
   for(int i = 0; i < NTEST; i++)
   {
-    db.query(testFeatures[i], ret, 4); //retrieves top 4 results?
+    // query database with testing images
+    db.query(testFeatures[i], ret, 4); //retrieves top 4 results
 
     // ret[0] is always the same image in this case, because we added it to the 
     // database. ret[1] is the second best match.
 
     cout << "Searching for Image: " << i << " with label:"<<testLabels[i]
-    << ". Label retrieved is:" << trainLabels[ret[0].Id] << endl;
-    if(testLabels[i]==trainLabels[ret[0].Id]){
+    << ". Label retrieved is:" << trainLabels[ret[0].Id] <<endl;
+
+    if(testLabels[i]==trainLabels[ret[0].Id])
+    {
       correctLabels++;
     }
+
   }
 
   cout << endl;
@@ -255,14 +281,14 @@ void testDatabaseFromDrive(const vector<vector<cv::Mat > > &trainFeatures, const
 
   // we can save the database. The created file includes the vocabulary
   // and the entries added
-  cout << "Saving database..." << endl;
-  db.save("small_db.yml.gz");
-  cout << "... done!" << endl;
+  //cout << "Saving database..." << endl;
+  //db.save("small_db.yml.gz");
+  //cout << "... done!" << endl;
   
   // once saved, we can load it again  
-  cout << "Retrieving database once again..." << endl;
-  OrbDatabase db2("small_db.yml.gz");
-  cout << "... done! This is: " << endl << db2 << endl;
+  //cout << "Retrieving database once again..." << endl;
+  //OrbDatabase db2("small_db.yml.gz");
+  //cout << "... done! This is: " << endl << db2 << endl;
 }
 
 
