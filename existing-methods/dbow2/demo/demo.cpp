@@ -256,14 +256,34 @@ void testDatabaseFromDrive(const vector<vector<cv::Mat > > &trainFeatures, const
   // and query the database
   cout << "Querying the database: " << endl;
 
+  int K = 4; // top K results are returned from the database
+  int relevantImages = 0; // number of images in results that have the expected label of query
+  int currRecall = 0; // recall per query
+  int sumRecall = 0; // sum of the recall values of all the queries for a specific K 
+  double sumPrecision = 0; // sum of precision values of all queries for a specific K
+  double precision = 0; // precision for a specific K
+  double recall = 0; // recall for a specific K
+
   QueryResults ret;
   for(int i = 0; i < NTEST; i++)
   {
     // query database with testing images
-    db.query(testFeatures[i], ret, 4); //retrieves top 4 results
+    db.query(testFeatures[i], ret, K); //retrieves top 4 results
 
-    // ret[0] is always the same image in this case, because we added it to the 
-    // database. ret[1] is the second best match.
+    // check all results to see if expected label exists in the set
+    currRecall = 0;
+    for(int j=0;j<K;j++){
+      if(testLabels[i]==trainLabels[ret[j].Id]){
+        relevantImages++;
+
+        // set the recall to 1 if any label in the result set matches the expected label
+        if(currRecall==0){
+          currRecall++;
+        }
+      }
+    }
+    sumRecall += currRecall;
+    sumPrecision += (relevantImages)/K;
 
     cout << "Searching for Image: " << i << " with label:"<<testLabels[i]
     << ". Label retrieved is:" << trainLabels[ret[0].Id] <<endl;
@@ -274,6 +294,9 @@ void testDatabaseFromDrive(const vector<vector<cv::Mat > > &trainFeatures, const
     }
 
   }
+
+  recall = double(sumRecall)/NTEST;
+  precision = sumPrecision/NTEST;
 
   cout << endl;
 
