@@ -428,6 +428,18 @@ void testDatabaseFromDrive(const vector<vector<cv::Mat > > &trainFeatures, const
   //cout << "... done! This is: " << endl << db2 << endl;
 }
 
+int findInArray(int index, int a[], int size)
+{
+  for(int i = 0; i < size; i++)
+  {
+    if(index == a[i])
+    {
+      return i;
+    }
+  }
+  return -1;
+}
+
 
 void testTrainedDatabase(const vector<vector<cv::Mat > > &testFeatures, vector<string> &trainLabels, vector<string> &testLabels)
 {
@@ -448,11 +460,13 @@ void testTrainedDatabase(const vector<vector<cv::Mat > > &testFeatures, vector<s
   int relevantImages = 0; // number of images in results that have the expected label of query
   int currRecall = 0; // recall per query
 
-  double data[4][2]; // data[][0] is recall, data[][1] is precision
-  int K[4] = {1,2,20,30};
+  int numK = 6;
+
+  double data[6][2]; // data[][0] is recall, data[][1] is precision
+  int K[6] = {1,2,20,30,40,50};
 
   // initialize array
-  for(int i = 0; i < 4; i++)
+  for(int i = 0; i < numK; i++)
   {
     for(int j = 0; j < 2; j++)
     {
@@ -462,14 +476,16 @@ void testTrainedDatabase(const vector<vector<cv::Mat > > &testFeatures, vector<s
 
 
   QueryResults ret;
+  int kIndex = 0;
   for(int i = 0; i < NTEST; i++)
   {
-    db.query(testFeatures[i],ret,K[3]+1);
+    db.query(testFeatures[i],ret,K[numK-1]+1);
     
     currRecall = 0;
     relevantImages = 0;
-    for(int j = 0; j < K[3]+1; j++)
+    for(int j = 0; j < K[numK-1]+1; j++)
     {
+      /*
       if(j==K[0])
       {
         data[0][0] += currRecall;
@@ -490,6 +506,13 @@ void testTrainedDatabase(const vector<vector<cv::Mat > > &testFeatures, vector<s
         data[3][0] += currRecall;
         data[3][1] += (double(relevantImages))/double(K[3]); 
       }
+      */
+      kIndex = findInArray(j,K,numK);
+      if(kIndex != -1)
+      {
+        data[kIndex][0] += currRecall;
+        data[kIndex][1] += (double(relevantImages))/double(K[kIndex]);
+      }
       if(testLabels[i]==trainLabels[ret[j].Id])
       {
         relevantImages++;
@@ -500,25 +523,17 @@ void testTrainedDatabase(const vector<vector<cv::Mat > > &testFeatures, vector<s
       }
     }
   }
-  for(int i = 0; i < 4; i++)
+  for(int i = 0; i < numK; i++)
   {
     for(int j = 0; j < 2; j++)
     {
       data[i][j] /= NTEST;
     }
+    cout<<"For K="<<K[i]<<" Recall="<<data[i][0]<<endl;
+    cout<<"For K="<<K[i]<<" Precision="<<data[i][1]<<endl;
+    cout<<endl;
 
   }
-  cout<<"For K="<<K[0]<<" Recall="<<data[0][0]<<endl;
-  cout<<"For K="<<K[0]<<" Precision="<<data[0][1]<<endl;
-  cout<<endl;
-  cout<<"For K="<<K[1]<<" Recall="<<data[1][0]<<endl;
-  cout<<"For K="<<K[1]<<" Precision="<<data[1][1]<<endl;
-  cout<<endl;
-  cout<<"For K="<<K[2]<<" Recall="<<data[2][0]<<endl;
-  cout<<"For K="<<K[2]<<" Precision="<<data[2][1]<<endl;
-  cout<<endl;
-  cout<<"For K="<<K[3]<<" Recall="<<data[3][0]<<endl;
-  cout<<"For K="<<K[3]<<" Precision="<<data[3][1]<<endl;
 
   cout << endl;
 
