@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <string>
+#include <fstream>
 
 // DBoW2
 #include "DBoW2.h" // defines OrbVocabulary and OrbDatabase
@@ -39,6 +40,10 @@ void loadFeatures(vector<vector<cv::Mat > > &features);
 void loadTrainingFeatures(string name, vector<vector<cv::Mat > > &trainFeatures, vector<string> &trainLabels);
 void loadTestingFeatures(string name, vector<vector<cv::Mat > > &testFeatures, vector<string> &testLabels);
 void testDatabaseFromDrive(const vector<vector<cv::Mat > > &trainFeatures, const vector<vector<cv::Mat > > &testFeatures, vector<string> &trainLabels, vector<string> &testLabels);
+void testTrainedDatabase(const vector<vector<cv::Mat > > &testFeatures, vector<string> &trainLabels, vector<string> &testLabels);
+void saveLabels(vector<string> &trainLabels);
+void loadLabels(vector<string> &trainLabels);
+
 
 void changeStructure(const cv::Mat &plain, vector<cv::Mat> &out);
 void testVocCreation(const vector<vector<cv::Mat > > &features);
@@ -78,14 +83,15 @@ void read_directory(const std::string& name, stringvec& v)
 
 int main()
 {
-  vector<vector<cv::Mat > > featurestrain; //training images
+  //vector<vector<cv::Mat > > featurestrain; //training images
   vector<vector<cv::Mat > > featurestest; //testing images
   vector<string> labelstrain; // training image labels
   vector<string> labelstest; // testing image labels
-  loadTrainingFeatures("images/train",featurestrain,labelstrain);
-  loadTestingFeatures("images/test", featurestest, labelstest);
-  testDatabaseFromDrive(featurestrain, featurestest, labelstrain, labelstest);
-
+  //loadTrainingFeatures("images/train",featurestrain,labelstrain);
+  loadLabels(labelstrain);
+  loadTestingFeatures("images/test/evening/resized", featurestest, labelstest);
+  //testDatabaseFromDrive(featurestrain, featurestest, labelstrain, labelstest);
+  testTrainedDatabase(featurestest, labelstrain, labelstest);
   //loadFeatures(features);
 
   //testVocCreation(features);
@@ -223,12 +229,36 @@ void loadTestingFeatures(string name, vector<vector<cv::Mat > > &testFeatures, v
 
 }
 
+void saveLabels(vector<string> &trainLabels){
+  cout << "Saving labels..." <<endl;
+  fstream f;
+  f.open("labels",fstream::out);
+  for(size_t i = 0; i < trainLabels.size(); i++)
+  {
+    f<<trainLabels[i]<<endl;
+  }
+  f.close();
+}
+
+void loadLabels(vector<string> &trainLabels)
+{
+  trainLabels.clear();
+  trainLabels.reserve(NTRAIN);
+  fstream f;
+  f.open("labels",fstream::in);
+  string label = "";
+  for(int i = 0; i < 1400; i++)
+  {
+    getline(f,label);
+    trainLabels.push_back(label);
+  }
+}
+
 // ----------------------------------------------------------------------------
 
 void testDatabaseFromDrive(const vector<vector<cv::Mat > > &trainFeatures, const vector<vector<cv::Mat > > &testFeatures, vector<string> &trainLabels, vector<string> &testLabels)
 {
-  int correctLabels = 0;
-
+  
   cout << "Creating trained database..." << endl;
 
   // load the vocabulary from disk
@@ -256,56 +286,140 @@ void testDatabaseFromDrive(const vector<vector<cv::Mat > > &trainFeatures, const
   // and query the database
   cout << "Querying the database: " << endl;
 
-  int K = 4; // top K results are returned from the database
   int relevantImages = 0; // number of images in results that have the expected label of query
   int currRecall = 0; // recall per query
-  int sumRecall = 0; // sum of the recall values of all the queries for a specific K 
-  double sumPrecision = 0; // sum of precision values of all queries for a specific K
-  double precision = 0; // precision for a specific K
-  double recall = 0; // recall for a specific K
-
+  //int sumRecall = 0; // sum of the recall values of all the queries for a specific K 
+  //double sumPrecision = 0; // sum of precision values of all queries for a specific K
+  //double precision = 0; // precision for a specific K
+  //double recall = 0; // recall for a specific K
   QueryResults ret;
+
+  double data[4][2]; // data[][0] is recall, data[][1] is precision
+  int K[4] = {1,2,20,30};
+
+  // initialize array
+  for(int i = 0; i < 4; i++)
+  {
+    for(int j = 0; j < 2; j++)
+    {
+      data[i][j] = 0;
+    }
+  }
+
+
+  
   for(int i = 0; i < NTEST; i++)
   {
-    // query database with testing images
-    db.query(testFeatures[i], ret, K); //retrieves top 4 results
-
-    // check all results to see if expected label exists in the set
+    db.query(testFeatures[i],ret,K[3]+1);
+    
     currRecall = 0;
-    for(int j=0;j<K;j++){
-      if(testLabels[i]==trainLabels[ret[j].Id]){
+    relevantImages = 0;
+    for(int j = 0; j < K[3]+1; j++)
+    {
+      if(j==K[0])
+      {
+        data[0][0] += currRecall;
+        data[0][1] += (double(relevantImages))/double(K[0]); 
+      }
+      else if(j==K[1])
+      {
+        data[1][0] += currRecall;
+        data[1][1] += (double(relevantImages))/double(K[1]); 
+      }
+      else if(j==K[2])
+      {
+        data[2][0] += currRecall;
+        data[2][1] += (double(relevantImages))/double(K[2]); 
+      }
+      else if(j==K[3])
+      {
+        data[3][0] += currRecall;
+        data[3][1] += (double(relevantImages))/double(K[3]); 
+      }
+      if(testLabels[i]==trainLabels[ret[j].Id])
+      {
         relevantImages++;
-
-        // set the recall to 1 if any label in the result set matches the expected label
-        if(currRecall==0){
+        if(currRecall==0)
+        {
           currRecall++;
         }
       }
     }
-    sumRecall += currRecall;
-    sumPrecision += (relevantImages)/K;
-
-    cout << "Searching for Image: " << i << " with label:"<<testLabels[i]
-    << ". Label retrieved is:" << trainLabels[ret[0].Id] <<endl;
-
-    if(testLabels[i]==trainLabels[ret[0].Id])
+  }
+  for(int i = 0; i < 4; i++)
+  {
+    for(int j = 0; j < 2; j++)
     {
-      correctLabels++;
+      data[i][j] /= NTEST;
     }
 
   }
+  cout<<"For K="<<K[0]<<" Recall="<<data[0][0]<<endl;
+  cout<<"For K="<<K[0]<<" Precision="<<data[0][1]<<endl;
+  cout<<endl;
+  cout<<"For K="<<K[1]<<" Recall="<<data[1][0]<<endl;
+  cout<<"For K="<<K[1]<<" Precision="<<data[1][1]<<endl;
+  cout<<endl;
+  cout<<"For K="<<K[2]<<" Recall="<<data[2][0]<<endl;
+  cout<<"For K="<<K[2]<<" Precision="<<data[2][1]<<endl;
+  cout<<endl;
+  cout<<"For K="<<K[3]<<" Recall="<<data[3][0]<<endl;
+  cout<<"For K="<<K[3]<<" Precision="<<data[3][1]<<endl;
+  
+  
+  /*
+  // top K results are returned from the database
+  for(int K = 1;K < 3; K++)
+  {
+    sumRecall = 0;
+    sumPrecision = 0;
+    for(int i = 0; i < NTEST; i++)
+    {
+      // query database with testing images
+      db.query(testFeatures[i], ret, K); //retrieves top 4 results
 
-  recall = double(sumRecall)/NTEST;
-  precision = sumPrecision/NTEST;
+      // check all results to see if expected label exists in the set
+      currRecall = 0;
+      relevantImages = 0;
+      for(int j=0;j<K;j++)
+      {
+        if(testLabels[i]==trainLabels[ret[j].Id])
+        {
+          relevantImages++;
+
+          // set the recall to 1 if any label in the result set matches the expected label
+          if(currRecall==0)
+          {
+            currRecall++;
+          }
+        }
+      }
+      sumRecall += currRecall;
+      sumPrecision += (double(relevantImages))/double(K);
+
+      //cout << "Searching for Image: " << i << " with label:"<<testLabels[i]<< ". Label retrieved is:" << trainLabels[ret[0].Id] <<endl;
+
+    }
+
+    recall = double(sumRecall)/NTEST;
+    precision = sumPrecision/NTEST;
+    cout<<"For K="<<K<<" Recall="<<recall<<endl;
+    cout<<"For K="<<K<<" Precision="<<precision<<endl;
+
+  }
+    
+  */
 
   cout << endl;
-
-  cout<<"Out of: "<<NTEST<<" images "<<correctLabels<<" queried correctly"<<endl;
 
   // we can save the database. The created file includes the vocabulary
   // and the entries added
   //cout << "Saving database..." << endl;
-  //db.save("small_db.yml.gz");
+  //db.save("db.yml.gz");
+
+  //saveLabels(trainLabels);
+
+  
   //cout << "... done!" << endl;
   
   // once saved, we can load it again  
@@ -314,6 +428,101 @@ void testDatabaseFromDrive(const vector<vector<cv::Mat > > &trainFeatures, const
   //cout << "... done! This is: " << endl << db2 << endl;
 }
 
+
+void testTrainedDatabase(const vector<vector<cv::Mat > > &testFeatures, vector<string> &trainLabels, vector<string> &testLabels)
+{
+
+  // load the vocabulary from disk
+
+  cout << "Loading database..." << endl;
+  
+  OrbDatabase db("db.yml.gz");
+
+  cout << "... done!" << endl;
+
+  cout << "Database information: " << endl << db << endl;
+
+  // and query the database
+  cout << "Querying the database: " << endl;
+
+  int relevantImages = 0; // number of images in results that have the expected label of query
+  int currRecall = 0; // recall per query
+
+  double data[4][2]; // data[][0] is recall, data[][1] is precision
+  int K[4] = {1,2,20,30};
+
+  // initialize array
+  for(int i = 0; i < 4; i++)
+  {
+    for(int j = 0; j < 2; j++)
+    {
+      data[i][j] = 0;
+    }
+  }
+
+
+  QueryResults ret;
+  for(int i = 0; i < NTEST; i++)
+  {
+    db.query(testFeatures[i],ret,K[3]+1);
+    
+    currRecall = 0;
+    relevantImages = 0;
+    for(int j = 0; j < K[3]+1; j++)
+    {
+      if(j==K[0])
+      {
+        data[0][0] += currRecall;
+        data[0][1] += (double(relevantImages))/double(K[0]); 
+      }
+      else if(j==K[1])
+      {
+        data[1][0] += currRecall;
+        data[1][1] += (double(relevantImages))/double(K[1]); 
+      }
+      else if(j==K[2])
+      {
+        data[2][0] += currRecall;
+        data[2][1] += (double(relevantImages))/double(K[2]); 
+      }
+      else if(j==K[3])
+      {
+        data[3][0] += currRecall;
+        data[3][1] += (double(relevantImages))/double(K[3]); 
+      }
+      if(testLabels[i]==trainLabels[ret[j].Id])
+      {
+        relevantImages++;
+        if(currRecall==0)
+        {
+          currRecall++;
+        }
+      }
+    }
+  }
+  for(int i = 0; i < 4; i++)
+  {
+    for(int j = 0; j < 2; j++)
+    {
+      data[i][j] /= NTEST;
+    }
+
+  }
+  cout<<"For K="<<K[0]<<" Recall="<<data[0][0]<<endl;
+  cout<<"For K="<<K[0]<<" Precision="<<data[0][1]<<endl;
+  cout<<endl;
+  cout<<"For K="<<K[1]<<" Recall="<<data[1][0]<<endl;
+  cout<<"For K="<<K[1]<<" Precision="<<data[1][1]<<endl;
+  cout<<endl;
+  cout<<"For K="<<K[2]<<" Recall="<<data[2][0]<<endl;
+  cout<<"For K="<<K[2]<<" Precision="<<data[2][1]<<endl;
+  cout<<endl;
+  cout<<"For K="<<K[3]<<" Recall="<<data[3][0]<<endl;
+  cout<<"For K="<<K[3]<<" Precision="<<data[3][1]<<endl;
+
+  cout << endl;
+
+}
 
 // ----------------------------------------------------------------------------
 
