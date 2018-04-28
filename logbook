@@ -142,3 +142,10 @@ Place recognition as a regression problem with continuous ground truth data (x, 
 
 DBoW2
 - Converted binary vocabulary file from ORBSLAM2 to yml format for new DBoW2. 
+
+- Test datasets: 
+	day1: 12:00pm - taken at the same time as the training dataset
+	day2: 12:00pm - taken after restarting the game to see if subtle randomization changes(cloud position affecting lighting) affects the algorithm
+	afternoon: 15:00pm
+	evening: 18:00pm
+	night: 21:00pm
