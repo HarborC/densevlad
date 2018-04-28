@@ -149,3 +149,18 @@ DBoW2
 	afternoon: 15:00pm
 	evening: 18:00pm
 	night: 21:00pm
+
+- for afternoon set 
+For K=1 Recall=0.948571
+For K=1 Precision=0.948571
+For K=2 Recall=0.977143
+For K=2 Precision=0.888571
+
+- for evening set
+For K=1 Recall=0.557143
+For K=1 Precision=0.557143
+For K=2 Recall=0.677143
+For K=2 Precision=0.437143
+
+- exported trained database to file "db.yml.gz" so we don't have to train everytime we run the code
+- Smooth out precision recall curve by storing values in data[1400][2] and then writing the precision and recalls to a file that we can import in python or matlab to plot
