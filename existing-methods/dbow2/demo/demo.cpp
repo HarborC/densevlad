@@ -34,9 +34,8 @@ typedef vector<string> stringvec;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-void loadTrainingFeatures(string name, vector<vector<cv::Mat > > &trainFeatures, vector<string> &trainLabels);
-void loadTestingFeatures(string name, vector<vector<cv::Mat > > &testFeatures, vector<string> &testLabels);
-void testDatabaseFromDrive(const vector<vector<cv::Mat > > &trainFeatures, const vector<vector<cv::Mat > > &testFeatures, vector<string> &trainLabels, vector<string> &testLabels);
+void loadFeatures(string name, vector<vector<cv::Mat > > &features, vector<string> &labels);
+void testNewDatabase(const vector<vector<cv::Mat > > &trainFeatures, const vector<vector<cv::Mat > > &testFeatures, vector<string> &trainLabels, vector<string> &testLabels);
 void testTrainedDatabase(const vector<vector<cv::Mat > > &testFeatures, vector<string> &trainLabels, vector<string> &testLabels);
 void saveLabels(vector<string> &trainLabels);
 void loadLabels(vector<string> &trainLabels);
@@ -136,8 +135,11 @@ void evaluateExistingTrainingSet(string &dataset)
   vector<string> labelstrain; // training image labels
   vector<string> labelstest; // testing image labels
 
+  // load training labels from file
   loadLabels(labelstrain);
-  loadTestingFeatures("images/test/" + dataset + "/resized", featurestest, labelstest);
+
+  // load testing features and labels
+  loadFeatures("images/test/" + dataset + "/resized", featurestest, labelstest);
 
   testTrainedDatabase(featurestest, labelstrain, labelstest);
 }
@@ -151,10 +153,13 @@ void evaluateNewTrainingSet(string &dataset)
   vector<string> labelstrain; // training image labels
   vector<string> labelstest; // testing image labels
 
-  loadTrainingFeatures("images/train",featurestrain,labelstrain);
-  loadTestingFeatures("images/test/" + dataset + "/resized", featurestest, labelstest);
+  // load training features and labels
+  loadFeatures("images/train",featurestrain,labelstrain);
 
-  testDatabaseFromDrive(featurestrain, featurestest, labelstrain, labelstest);
+  // load testing features and labels
+  loadFeatures("images/test/" + dataset + "/resized", featurestest, labelstest);
+
+  testNewDatabase(featurestrain, featurestest, labelstrain, labelstest);
 }
 
 // ----------------------------------------------------------------------------
@@ -170,19 +175,19 @@ int main(int argc, char** argv)
 
 // ----------------------------------------------------------------------------
 
-void loadTrainingFeatures(string name, vector<vector<cv::Mat > > &trainFeatures, vector<string> &trainLabels)
+void loadFeatures(string name, vector<vector<cv::Mat > > &features, vector<string> &labels)
 {
-  trainFeatures.clear();
-  trainFeatures.reserve(NTRAIN);
-  trainLabels.clear();
-  trainLabels.reserve(NTRAIN);
+  features.clear();
+  features.reserve(NTRAIN);
+  labels.clear();
+  labels.reserve(NTRAIN);
 
   // ORB-SLAM extracts 1000 features for mono kitti example that we used for GTA V
   cv::Ptr<cv::ORB> orb = cv::ORB::create(1000);
 
   cout << "Extracting ORB features..." << endl;
 
-  // get all images in training directory and get their features
+  // get all images in directory and get their features
   DIR* dirp = opendir(name.c_str());
   struct dirent * dp;
   while((dp = readdir(dirp)) != NULL) 
@@ -199,9 +204,9 @@ void loadTrainingFeatures(string name, vector<vector<cv::Mat > > &trainFeatures,
 
       orb->detectAndCompute(image, mask, keypoints, descriptors);
 
-      trainLabels.push_back(getLabel(dp->d_name));
-      trainFeatures.push_back(vector<cv::Mat >());
-      changeStructure(descriptors, trainFeatures.back());
+      labels.push_back(getLabel(dp->d_name));
+      features.push_back(vector<cv::Mat >());
+      changeStructure(descriptors, features.back());
     }
   }
   closedir(dirp);
@@ -209,154 +214,10 @@ void loadTrainingFeatures(string name, vector<vector<cv::Mat > > &trainFeatures,
 
 // ----------------------------------------------------------------------------
 
-void loadTestingFeatures(string name, vector<vector<cv::Mat > > &testFeatures, vector<string> &testLabels)
+void queryDatabase(OrbDatabase &db, const vector<vector<cv::Mat > > &testFeatures, vector<string> &trainLabels, vector<string> &testLabels, int K)
 {
-  testFeatures.clear();
-  testFeatures.reserve(NTEST);
-  testLabels.clear();
-  testLabels.reserve(NTEST);
-
-  // ORB-SLAM extracts 1000 features for mono kitti example that we used for GTA V
-  cv::Ptr<cv::ORB> orb = cv::ORB::create(1000);
-
-  cout << "Extracting testing ORB features..." << endl;
-
-  // get all images in testing directory and get their features
-  DIR* dirp = opendir(name.c_str());
-  struct dirent * dp;
-  while((dp = readdir(dirp)) != NULL) 
-  {
-    if(strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0)
-    {
-      stringstream ss;
-      ss<<name<<"/"<<dp->d_name;
-      cout<<"file is:"<<ss.str()<<endl;
-      cv::Mat image = cv::imread(ss.str(), 0);
-      cv::Mat mask;
-      vector<cv::KeyPoint> keypoints;
-      cv::Mat descriptors;
-
-      orb->detectAndCompute(image, mask, keypoints, descriptors);
-
-      testLabels.push_back(getLabel(dp->d_name));
-      testFeatures.push_back(vector<cv::Mat >());
-      changeStructure(descriptors, testFeatures.back());
-    }
-  }
-  closedir(dirp);
-
-}
-
-// ----------------------------------------------------------------------------
-
-void testDatabaseFromDrive(const vector<vector<cv::Mat > > &trainFeatures, const vector<vector<cv::Mat > > &testFeatures, vector<string> &trainLabels, vector<string> &testLabels)
-{
-  
-  cout << "Creating trained database..." << endl;
-
-  // load the vocabulary from disk
-
-  OrbVocabulary  voc;
-
-  voc.loadFromTextFile("ORBvoc.txt");
-  
-  OrbDatabase db(voc, false, 0); // false = do not use direct index
-  // (so ignore the last param)
-  // The direct index is useful if we want to retrieve the features that 
-  // belong to some vocabulary node.
-  // db creates a copy of the vocabulary, we may get rid of "voc" now
-
-  // add images to the database
-  for(int i = 0; i < NTRAIN; i++)
-  {
-    db.add(trainFeatures[i]);
-  }
-
-  cout << "... done!" << endl;
-
-  cout << "Database information: " << endl << db << endl;
-
-  cout << "Querying the database: " << endl;
-
   int relevantImages = 0; // number of images in results that have the expected label of query
   int currRecall = 0; // recall per query
-
-  QueryResults ret;
-
-  int K = 50; // highest value of K(top K results retrieved from database)
-
-  vector<double> recalls(K);
-  vector<double> precisions(K);
-
-  // initialize array
-  for(int i = 0; i < K; i++)
-  {
-    recalls[i] = 0;
-    precisions[i] = 0;
-  }
-
-  for(int i = 0; i < NTEST; i++)
-  {
-    db.query(testFeatures[i],ret,K);
-    
-    currRecall = 0;
-    relevantImages = 0;
-    for(int j = 0; j < K; j++)
-    {
-      if(testLabels[i]==trainLabels[ret[j].Id])
-      {
-        relevantImages++;
-        if(currRecall==0)
-        {
-          currRecall++;
-        }
-      }
-      recalls[j] += currRecall;
-      precisions[j] += (double(relevantImages))/double(j+1);
-    }
-  }
-  for(int i = 0; i < K; i++)
-  {
-    recalls[i] /= NTEST;
-    precisions[i] /= NTEST;
-  }
-
-  cout << endl;
-
-  cout << "recalls=";
-  printVector(recalls);
-  cout << "precisions=";
-  printVector(precisions);
-
-  cout << endl;
-
-  cout << "Saving database..." << endl;
-  db.save("db.yml.gz");
-  cout << "... done!" << endl;
-
-  saveLabels(trainLabels);
-}
-
-
-void testTrainedDatabase(const vector<vector<cv::Mat > > &testFeatures, vector<string> &trainLabels, vector<string> &testLabels)
-{
-
-  // load the database from disk
-
-  cout << "Loading database..." << endl;
-  
-  OrbDatabase db("db.yml.gz");
-
-  cout << "... done!" << endl;
-
-  cout << "Database information: " << endl << db << endl;
-
-  cout << "Querying the database: " << endl;
-
-  int relevantImages = 0; // number of images in results that have the expected label of query
-  int currRecall = 0; // recall per query
-
-  int K = 50; // highest value of K(top K results retrieved from database)
 
   vector<double> recalls(K);
   vector<double> precisions(K);
@@ -403,6 +264,69 @@ void testTrainedDatabase(const vector<vector<cv::Mat > > &testFeatures, vector<s
   printVector(recalls);
   cout << "precisions=";
   printVector(precisions);
+
+  cout << endl;
+}
+
+// ----------------------------------------------------------------------------
+
+void testNewDatabase(const vector<vector<cv::Mat > > &trainFeatures, const vector<vector<cv::Mat > > &testFeatures, vector<string> &trainLabels, vector<string> &testLabels)
+{
+  
+  cout << "Creating trained database..." << endl;
+
+  // load the vocabulary from disk
+  OrbVocabulary  voc;
+
+  voc.loadFromTextFile("ORBvoc.txt");
+  
+  OrbDatabase db(voc, false, 0); // false = do not use direct index
+  // (so ignore the last param)
+  // The direct index is useful if we want to retrieve the features that 
+  // belong to some vocabulary node.
+  // db creates a copy of the vocabulary, we may get rid of "voc" now
+
+  // add images to the database
+  for(int i = 0; i < NTRAIN; i++)
+  {
+    db.add(trainFeatures[i]);
+  }
+
+  cout << "... done!" << endl;
+
+  cout << "Database information: " << endl << db << endl;
+
+  cout << "Querying the database: " << endl;
+
+  // query and print precision/recall with top 50 results
+  queryDatabase(db, testFeatures, trainLabels, testLabels, 50); 
+
+  cout << "Saving database..." << endl;
+  db.save("db.yml.gz");
+  cout << "... done!" << endl;
+
+  saveLabels(trainLabels);
+}
+
+// ----------------------------------------------------------------------------
+
+void testTrainedDatabase(const vector<vector<cv::Mat > > &testFeatures, vector<string> &trainLabels, vector<string> &testLabels)
+{
+
+  // load the database from disk
+
+  cout << "Loading database..." << endl;
+  
+  OrbDatabase db("db.yml.gz");
+
+  cout << "... done!" << endl;
+
+  cout << "Database information: " << endl << db << endl;
+
+  cout << "Querying the database: " << endl;
+
+  // query and print precision/recall with top 50 results
+  queryDatabase(db, testFeatures, trainLabels, testLabels, 50); 
 
 }
 
