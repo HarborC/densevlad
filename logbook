@@ -175,3 +175,5 @@ sudo ln -s /usr/bin/g++-4.9 /usr/bin/g++
 
 - install cuda using the run file and make sure to say no to installing graphics driver during the process
 - Don't forget to setup matconvnet and resetting gpu using gpuDevice(1) before training neural net and testing.
+
+- Have to try pytorch cnnimageretrieval instead. MATLAB based runs out of GPU memory even with 8GB graphics card. 
