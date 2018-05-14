@@ -185,3 +185,5 @@ DenseVLAD
 - Can create a vocabulary by using vl feat to get the DenseSIFT points of the training set and then creating the vocabulary using vl feats k means clustering of vectors as in : http://www.vlfeat.org/overview/kmeans.html
 - Or look at the Yael library functions 
 - 24/7 project uses PHOW descriptors from vlfeat which is a variant of DenseSIFT
+- The paper says that they "extract SIFT [29] descriptors at 4 scales corresponding to region widths of 16, 24, 32 and 40 pixels"
+but the code uses scales of [4 6 8 10]. Are those the region widths or what?
