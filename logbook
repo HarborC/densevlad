@@ -187,3 +187,4 @@ DenseVLAD
 - 24/7 project uses PHOW descriptors from vlfeat which is a variant of DenseSIFT
 - The paper says that they "extract SIFT [29] descriptors at 4 scales corresponding to region widths of 16, 24, 32 and 40 pixels"
 but the code uses scales of [4 6 8 10]. Are those the region widths or what?
+- Is the vocabulary built from just the DenseSIFT(PHOW) descriptors or the DenseSIFT with RootSIFT normalized descriptors??
