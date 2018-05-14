@@ -177,3 +177,11 @@ sudo ln -s /usr/bin/g++-4.9 /usr/bin/g++
 - Don't forget to setup matconvnet and resetting gpu using gpuDevice(1) before training neural net and testing.
 
 - Have to try pytorch cnnimageretrieval instead. MATLAB based runs out of GPU memory even with 8GB graphics card. 
+______________________________________________________________________________________________
+
+DenseVLAD
+
+- Dense SIFT vector is 128 dimensions.
+- Can create a vocabulary by using vl feat to get the DenseSIFT points of the training set and then creating the vocabulary using vl feats k means clustering of vectors as in : http://www.vlfeat.org/overview/kmeans.html
+- Or look at the Yael library functions 
+- 24/7 project uses PHOW descriptors from vlfeat which is a variant of DenseSIFT
