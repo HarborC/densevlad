@@ -189,3 +189,9 @@ DenseVLAD
 but the code uses scales of [4 6 8 10]. Are those the region widths or what?
 - Is the vocabulary built from just the DenseSIFT(PHOW) descriptors or the DenseSIFT with RootSIFT normalized descriptors??
 - Look at how many words are there in ORB SLAM vocabulary by loading into dbow2. Make similar vocab for this one.
+- Use pretrained net to conduct experiments.
+- Normalized vector = x/norm(x) norm = length of vector
+- Use kdtree but remember to normalize 1400 
+- Check result using
+- Kdtree function to return top 50
+
