@@ -1,0 +1,1 @@
+densevlad_dir('./data/images/train','train1');
