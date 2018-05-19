@@ -1,11 +1,15 @@
+tic
 % generate training vlads file
-densevlad_dir('./data/images/train','train');
+densevlad_dir_par('./data/images/train','train');
 
 % generate testing vlads file
-%densevlad_dir('./data/images/test/day1','day1');
-%densevlad_dir('./data/images/test/day2','day2');
-%densevlad_dir('./data/images/test/afternoon','afternoon');
-%densevlad_dir('./data/images/test/evening','evening');
-%densevlad_dir('./data/images/test/night','night');
+%densevlad_dir_par('./data/images/test/day1/resized','day1');
+
+%densevlad_dir_par('./data/images/test/day2/resized','day2');
+%densevlad_dir_par('./data/images/test/afternoon/resized','afternoon');
+
+%densevlad_dir_par('./data/images/test/evening/resized','evening');
+%densevlad_dir_par('./data/images/test/night/resized','night');
+toc
 
 
