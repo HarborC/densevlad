@@ -86,6 +86,21 @@ static struct {
 			{ "CHILLIAD", 425.4f, 5614.3f, 766.5f }
 	};
 
+Weather Types
+
+1."CLEAR"
+"EXTRASUNNY"
+"CLOUDS"
+"OVERCAST"
+2."RAIN"
+"CLEARING"
+3."THUNDER"
+"SMOG"
+"FOGGY"
+4."XMAS"
+"SNOWLIGHT"
+"BLIZZARD"
+
 static struct {
 	float cx;
 	float cy;
