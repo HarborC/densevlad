@@ -1,9 +1,11 @@
 % createns function requires an X which is nxk where n is num observations
 % so we would have to transpose vlads matrix
 
+dataset = 'day-thunder';
+
 load('train.mat');
 train_vlads = v;
-load('night.mat');
+load([dataset '.mat']);
 test_vlads = v;
 topK = 50;
 
@@ -40,5 +42,5 @@ end
 recalls = recalls/length(indexofnn);
 precisions = precisions/length(indexofnn);
 
-save('results_night.mat','recalls','precisions');
+save(['results_' dataset '.mat'],'recalls','precisions');
 
