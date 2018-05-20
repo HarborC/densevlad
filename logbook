@@ -86,6 +86,21 @@ static struct {
 			{ "CHILLIAD", 425.4f, 5614.3f, 766.5f }
 	};
 
+Weather Types
+
+1."CLEAR"
+"EXTRASUNNY"
+"CLOUDS"
+"OVERCAST"
+2."RAIN"
+"CLEARING"
+3."THUNDER"
+"SMOG"
+"FOGGY"
+4."XMAS"
+"SNOWLIGHT"
+"BLIZZARD"
+
 static struct {
 	float cx;
 	float cy;
@@ -194,4 +209,17 @@ but the code uses scales of [4 6 8 10]. Are those the region widths or what?
 - Use kdtree but remember to normalize 1400 
 - Check result using
 - Kdtree function to return top 50
+
+--- DATASETS ---
+day1: 12:00 (collected in the same run as training set)
+day2: 12:00 (collected in different run as training set to see impact of random vehicles, pedestrians, clouds etc.)
+day-blizzard: 12:00 with Blizzard weather conditions (testing impact of noise caused by snow particles apart from lighting changes)
+day-rain: 12:00 with Rain weather conditions (testing impact of noise caused by rain particles and reflections on ground among other variations apart from lighting changes)
+day-thunder: 12:00 with Thunderstorm weather conditions (testing impact of spontaneous lighting changes caused by lighting as well as severe noise by heavy rain apart from lighting changes)
+afternoon: 15:00
+evening: 18:00
+night: 21:00
+night2: 00:00 (testing 12 hour change in lighting)
+night2-rain: 00:00 (testing 12 hour change + variations by rain weather as outlined in day-rain description)
+night2-thunder: 00:00 (testing 12 hour change + variations by thunderstorm weather as outlined in day-thunder description)
 
